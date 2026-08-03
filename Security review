@@ -1,0 +1,307 @@
+PROMPT ======================================================
+PROMPT SECTION 1 - DATABASE INFORMATION
+PROMPT ======================================================
+
+SELECT name,
+       db_unique_name,
+       open_mode,
+       database_role,
+       log_mode,
+       created
+FROM v$database;
+
+SELECT banner_full
+FROM v$version;
+
+
+PROMPT ======================================================
+PROMPT SECTION 2 - USERS
+PROMPT ======================================================
+
+SELECT username,
+       account_status,
+       profile,
+       default_tablespace,
+       created
+FROM dba_users
+ORDER BY username;
+
+
+PROMPT ======================================================
+PROMPT SECTION 3 - LOCKED & EXPIRED USERS
+PROMPT ======================================================
+
+SELECT username,
+       account_status,
+       lock_date,
+       expiry_date
+FROM dba_users
+WHERE account_status <> 'OPEN'
+ORDER BY username;
+
+
+PROMPT ======================================================
+PROMPT SECTION 4 - DBA USERS
+PROMPT ======================================================
+
+SELECT grantee
+FROM dba_role_privs
+WHERE granted_role='DBA'
+ORDER BY grantee;
+
+
+PROMPT ======================================================
+PROMPT SECTION 5 - SYSTEM PRIVILEGES
+PROMPT ======================================================
+
+SELECT grantee,
+       privilege,
+       admin_option
+FROM dba_sys_privs
+WHERE grantee NOT IN (SELECT role FROM dba_roles)
+ORDER BY grantee;
+
+
+PROMPT ======================================================
+PROMPT SECTION 6 - ROLE GRANTS
+PROMPT ======================================================
+
+SELECT grantee,
+       granted_role,
+       admin_option,
+       default_role
+FROM dba_role_privs
+WHERE grantee NOT IN (SELECT role FROM dba_roles)
+ORDER BY grantee;
+
+
+PROMPT ======================================================
+PROMPT SECTION 7 - OBJECT PRIVILEGES
+PROMPT ======================================================
+
+SELECT owner,
+       table_name,
+       grantee,
+       privilege,
+       grantor,
+       grantable
+FROM dba_tab_privs
+ORDER BY owner, table_name;
+
+
+PROMPT ======================================================
+PROMPT SECTION 8 - PUBLIC GRANTS
+PROMPT ======================================================
+
+SELECT owner,
+       table_name,
+       privilege
+FROM dba_tab_privs
+WHERE grantee='PUBLIC'
+ORDER BY owner, table_name;
+
+
+PROMPT ======================================================
+PROMPT SECTION 9 - POWERFUL SYSTEM PRIVILEGES
+PROMPT ======================================================
+
+SELECT grantee,
+       privilege
+FROM dba_sys_privs
+WHERE privilege IN
+('CREATE ANY TABLE',
+ 'DROP ANY TABLE',
+ 'ALTER ANY TABLE',
+ 'SELECT ANY TABLE',
+ 'INSERT ANY TABLE',
+ 'UPDATE ANY TABLE',
+ 'DELETE ANY TABLE',
+ 'CREATE ANY PROCEDURE',
+ 'EXECUTE ANY PROCEDURE',
+ 'CREATE ANY DIRECTORY',
+ 'GRANT ANY PRIVILEGE',
+ 'GRANT ANY ROLE',
+ 'BECOME USER',
+ 'ALTER SYSTEM')
+ORDER BY grantee;
+
+
+PROMPT ======================================================
+PROMPT SECTION 10 - DIRECTORY OBJECTS
+PROMPT ======================================================
+
+SELECT owner,
+       directory_name,
+       directory_path
+FROM dba_directories;
+
+
+PROMPT ======================================================
+PROMPT SECTION 11 - DIRECTORY PRIVILEGES
+PROMPT ======================================================
+
+SELECT *
+FROM dba_tab_privs
+WHERE table_name IN
+(
+SELECT directory_name
+FROM dba_directories
+)
+ORDER BY grantee;
+
+
+PROMPT ======================================================
+PROMPT SECTION 12 - UTL_FILE ACCESS
+PROMPT ======================================================
+
+SELECT *
+FROM dba_tab_privs
+WHERE table_name='UTL_FILE';
+
+
+PROMPT ======================================================
+PROMPT SECTION 13 - DATABASE LINKS
+PROMPT ======================================================
+
+SELECT owner,
+       db_link,
+       username,
+       host
+FROM dba_db_links
+ORDER BY owner;
+
+
+PROMPT ======================================================
+PROMPT SECTION 14 - INVALID OBJECTS
+PROMPT ======================================================
+
+SELECT owner,
+       object_type,
+       object_name
+FROM dba_objects
+WHERE status='INVALID'
+ORDER BY owner;
+
+
+PROMPT ======================================================
+PROMPT SECTION 15 - FAILED LOGINS (LAST 24 HOURS)
+PROMPT ======================================================
+
+SELECT event_timestamp,
+       dbusername,
+       userhost,
+       return_code
+FROM unified_audit_trail
+WHERE action_name='LOGON'
+AND return_code<>0
+AND event_timestamp>SYSTIMESTAMP-1
+ORDER BY event_timestamp DESC;
+
+
+PROMPT ======================================================
+PROMPT SECTION 16 - SUCCESSFUL LOGINS (LAST 24 HOURS)
+PROMPT ======================================================
+
+SELECT event_timestamp,
+       dbusername,
+       userhost
+FROM unified_audit_trail
+WHERE action_name='LOGON'
+AND return_code=0
+AND event_timestamp>SYSTIMESTAMP-1
+ORDER BY event_timestamp DESC;
+
+
+PROMPT ======================================================
+PROMPT SECTION 17 - DDL ACTIVITY (LAST 24 HOURS)
+PROMPT ======================================================
+
+SELECT event_timestamp,
+       dbusername,
+       action_name,
+       object_schema,
+       object_name
+FROM unified_audit_trail
+WHERE action_name IN
+('CREATE',
+ 'ALTER',
+ 'DROP')
+AND event_timestamp>SYSTIMESTAMP-1
+ORDER BY event_timestamp DESC;
+
+
+PROMPT ======================================================
+PROMPT SECTION 18 - GRANTS LAST 24 HOURS
+PROMPT ======================================================
+
+SELECT event_timestamp,
+       dbusername,
+       action_name,
+       sql_text
+FROM unified_audit_trail
+WHERE action_name='GRANT'
+AND event_timestamp>SYSTIMESTAMP-1
+ORDER BY event_timestamp DESC;
+
+
+PROMPT ======================================================
+PROMPT SECTION 19 - SCHEDULER JOBS
+PROMPT ======================================================
+
+SELECT owner,
+       job_name,
+       enabled,
+       state
+FROM dba_scheduler_jobs
+ORDER BY owner, job_name;
+
+
+PROMPT ======================================================
+PROMPT SECTION 20 - SCHEDULER FAILURES (LAST 24 HOURS)
+PROMPT ======================================================
+
+SELECT owner,
+       job_name,
+       status,
+       actual_start_date,
+       additional_info
+FROM dba_scheduler_job_run_details
+WHERE log_date>SYSTIMESTAMP-1
+AND status<>'SUCCEEDED'
+ORDER BY log_date DESC;
+
+
+PROMPT ======================================================
+PROMPT SECTION 21 - PROFILES
+PROMPT ======================================================
+
+SELECT profile,
+       resource_name,
+       limit
+FROM dba_profiles
+ORDER BY profile, resource_name;
+
+
+PROMPT ======================================================
+PROMPT SECTION 22 - PASSWORD VERIFY FUNCTION
+PROMPT ======================================================
+
+SELECT profile,
+       limit
+FROM dba_profiles
+WHERE resource_name='PASSWORD_VERIFY_FUNCTION';
+
+
+PROMPT ======================================================
+PROMPT SECTION 23 - AUDIT POLICIES
+PROMPT ======================================================
+
+SELECT policy_name,
+       enabled_option
+FROM audit_unified_enabled_policies
+ORDER BY policy_name;
+
+
+PROMPT ======================================================
+PROMPT END OF SECURITY AUDIT
+PROMPT ======================================================
