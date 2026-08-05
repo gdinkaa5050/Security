@@ -1,0 +1,149 @@
+# DB Gateway Access — LGY & VALERI RDS (RHEL8)
+
+*This is the full page in reading order — top to bottom, exactly as it should appear once assembled. Use it to check your Confluence page against.*
+
+---
+
+## [ABOVE THE TAB CONTAINER — page intro]
+
+**Purpose:** Assist developers/QA testers with the access request process for the new DB Gateway servers used to access LGY RDS Oracle instances in the RHEL8 environments.
+
+**Full sequence:**
+1. NMEA account
+2. CyberArk PIV
+3. ePAS role
+4. SNOW ticket
+5. Connect (RDP)
+
+> **[Panel macro — red/warning]**
+> **Before requesting ePAS roles (Step 3):** Create the Jira ticket first — clone from `LGYDSO` for LGY, and clone from `LGYDSO` for VALERI — and submit both for approval. Do not request ePAS groups/roles before the Jira approval is in flight.
+
+**Jira Approval Request Process**
+- The requestor creates a Jira ticket using the **LGY Operations Service Desk > Access Request Ticket**.
+- Once submitted, the ticket is automatically sent through the approval process.
+- The requestor receives an automated email response for approval/denial. Example: `LGYDSO`
+
+---
+
+## [TAB CONTAINER — horizontal, 4 tabs]
+
+### TAB 1: NMEA
+
+**NMEA (Zero) account**
+
+Required before anything else — this is the protected identity used for all downstream access.
+
+- This is a protected system. You must have a NMEA (Zero) account and open the connection to the gateway via a PAS 2.0 RDP connection.
+- Not sure if you already have one? Check `portal.azu`.
+- If you don't have a NMEA account yet, it can be created during the ePAS request (see the ePAS tab, "Strong Authentication Token" section) using the naming convention `VBA\[WINDOWSNAME]0`.
+
+> **[Panel macro — warning]**
+> **If you already have an ePAS in flight:** Clone the in-progress one and submit based on that copy. Starting a fresh request instead of cloning can wipe existing access or lose what's currently in flight.
+
+---
+
+### TAB 2: ePAS
+
+**Prerequisites for DB access**
+
+You need CyberArk (PIV option) **plus** the ePAS group/role — both are required, not either/or.
+
+- CyberArk – PIV access
+- One of these ePAS groups/roles assigned to your NMEA account: `vaecwins-gateway-nprod`, `vaecwins_ateway-prod`, `CldWinS_Dev`
+
+**Part A — Submit the ePAS request**
+
+Portal: https://epas.r02.med.va.gov/apps/myva/
+
+1. Go to the ePAS portal and select **Submit Request** — you'll be redirected to the Assignee tab.
+2. **Assignee Information.** Name, email, and domain are usually pre-populated — fill manually if not.
+   - Domain: `[VBA/WINDOWSNAME]`
+   - Employee type: Contractor
+   - Date of birth: MM/DD/YYYY
+   - SSN: 000-00-0000 format
+3. **Expiration of Elevated Privileges.** "Date Expires" = your PIV expiration date.
+4. **Strong Authentication Token.** Only one NMEA is required.
+   - If you have a NMEA account, enter it including the domain name.
+   - If not, enter a name in the blank field to create one, using: `VBA\[WINDOWSNAME]0`
+5. **Supervisor/COR.**
+   - Name: Corona, Jose
+   - Email: Jrona@vakk
+
+**Part B — CyberArk + PAS (PIV option)**
+
+1. Create a new EPAS document and request access for your zero account to one of the three groups listed above.
+2. Choose **Submit New Request**.
+3. Select your PIV card expiration date in the "Date Expires" field.
+4. Under Supervisor/COR, select **Lookup**, enter `Corona, Jose`, hit enter, and select the name in the popup.
+5. Switch to the **Roles** tab.
+6. In the purple box, select a role under **Standard Role**, then click **Add Selected Role**.
+
+   Justification field:
+   `<enter NMEA account> - As a <enter role> I require access to the VA PAS System PIV/PIV Cert with PAS to access DB Gateway servers.`
+
+7. In the pink box (**Groups that represent a Role**), set **Systems Reside In** → **Infrastructure Operations**. In the popup, search `VA PAS`, select **VA PAS Users**, click OK.
+
+   Justification/Details field:
+   `<NMEA account> - I require access to the VA PAS System PIV/PIV Cert with PAS solution to perform my work as a <enter your role>.`
+
+**Part C — Add DB Gateway Servers (RDP) to the same request**
+
+1. Still in the pink box, under **Groups that represent a role**, set **Systems Reside In** → **VA Enterprise Cloud**.
+2. Select **Select Groups to Add**. In the popup, search `vaecwins_aws_lgy-rds-gateway`.
+3. Select both groups: `vaecwins_aws_lgy-rds-gateway-nprod` and `vaecwins_aws_lgy-rds-gateway-prod`, then click OK. This adds two lines to the bottom of the document — select your 0 account on that line.
+
+   Justification/Details field:
+   `As a <enter your role>, I require RDP access to Non-Prod LGY Environments for my NMEA account to support QA testing/development efforts.`
+
+4. Click **Submit & Submit** (top left) to send the document for approval and processing.
+
+---
+
+### TAB 3: SNOW
+
+**SNOW ticket**
+
+Only submit this after your Jira and ePAS approvals are complete — it hands off to the Ops team for provisioning.
+
+> **[Panel macro — red/warning]**
+> **Format matters:** A ticket that doesn't follow the description format below is not correct and will be closed with no action.
+
+**Service Request Description — copy, personalize, paste:**
+
+```
+Please add to my PIV account to vaecwins_aws_lgy-RDS-gateway-nprod on vac10raslgy811.va.gov
+
+As a QA tester/developer/project lead, I need access to this server to support LGY sustainment efforts until end of contract.
+
+If required, my NMEA account is OITWAS.
+
+DSO-345 is approved.
+```
+
+1. Paste and personalize the description above (swap in your own server target, role, and NMEA account).
+2. Click **Order Now**.
+
+---
+
+### TAB 4: Connect
+
+**Connect via CyberArk**
+
+Final step, once all four prior steps are approved and provisioned.
+
+1. Confirm Jira ticket, ePAS request, and SNOW ticket are all approved/completed.
+2. Log in via CyberArk and connect to the RDS instance through the RDP gateway.
+
+> **[Panel macro — info/blue]**
+> **Gap:** source notes end mid-section ("Perform the following steps to request access to connect to RDP server…"). Add the remaining CyberArk connection steps here once available.
+
+---
+
+## Checklist to verify against your live page
+
+- [ ] Intro (Purpose, 5-step list, Jira warning panel, Jira process bullets) sits **above** the Tab Container — not inside any tab
+- [ ] Tab Container is set to **horizontal**
+- [ ] 4 tabs present, titled exactly: `NMEA`, `ePAS`, `SNOW`, `Connect`
+- [ ] Each tab's content matches the section above
+- [ ] Group names, justification strings, and the SNOW description are in code/monospace formatting so they're easy to copy exactly
+- [ ] Both warning panels (Jira-before-ePAS, SNOW format) are in red/warning Panel macros, not plain text
