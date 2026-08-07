@@ -105,6 +105,9 @@ Portal: https://epas.r02.med.va.gov/apps/myva/
 
 Only submit this after your Jira and ePAS approvals are complete — it hands off to the Ops team for provisioning.
 
+> **[Panel macro — info/blue]**
+> **This does not replace the ePAS approval.** ePAS is where the access is *approved* (group membership request). SNOW is where Ops *provisions* it — adding your PIV account to that already-approved group on the specific server. The group name here must match what was approved in ePAS.
+
 > **[Panel macro — red/warning]**
 > **Format matters:** A ticket that doesn't follow the description format below is not correct and will be closed with no action.
 
